@@ -1,0 +1,5 @@
+numpy
+mmcv
+torch
+torchvision
+tabulate

@@ -145,3 +145,4 @@ reid/core/evaluation/rank_cylib/rank.c
 
 # workspace
 work_dirs/
+.dist/

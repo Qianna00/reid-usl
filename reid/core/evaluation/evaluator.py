@@ -1,6 +1,9 @@
+import warnings
+
 import numpy as np
 import torch.distributed as dist
 import torch.nn.functional as F
+from mmcv.runner import get_dist_info
 from mmcv.utils import print_log
 from tabulate import tabulate
 
@@ -8,9 +11,10 @@ from ..distances import cosine_dist, euclidean_dist
 from .extract import multi_gpu_extract, single_gpu_extract
 
 try:
-    from ._rank import rank
+    from ._rank import ranking
 except ImportError:
-    from .rank import rank
+    from .rank import ranking
+    warnings.warn('Cython version of ranking method is not imported.')
 
 
 class Evaluator:
@@ -39,11 +43,7 @@ class Evaluator:
             return single_gpu_extract(
                 model, data_loader, progress=self.progress)
 
-    def eval(self, model, data_loader, logger=None):
-        assert data_loader.dataset.test_mode
-        num_query = data_loader.dataset.num_query
-
-        results = self.extract(model, data_loader)
+    def _eval(self, results, num_query, logger=None):
         feats = results['feats']
         pids = results['pids']
         camids = results['camids']
@@ -65,19 +65,30 @@ class Evaluator:
         dist = self.metric(query_feats, gallery_feats)
 
         # convert to np
-        cmc, all_AP = rank(dist.numpy(), query_pids.numpy(),
-                           gallery_pids.numpy(), query_camids.numpy(),
-                           gallery_camids.numpy(), self.max_rank)
+        cmc, all_AP = ranking(dist.numpy(), query_pids.numpy(),
+                              gallery_pids.numpy(), query_camids.numpy(),
+                              gallery_camids.numpy(), self.max_rank)
         mAP = np.mean(all_AP)
 
         _results = {}
         for k in self.topk:
             _results[f'Rank-{k}'] = cmc[k - 1]
         _results['mAP'] = mAP
-        self.report_results(
-            _results,
-            dataset_name=data_loader.dataset.DATA_SOURCE,
-            logger=logger)
+
+        return _results
+
+    def eval(self, model, data_loader, logger=None):
+        dataset = data_loader.dataset
+        assert dataset.test_mode  # test mode
+        num_query = dataset.num_query
+
+        # extract
+        results = self.extract(model, data_loader)
+        rank, _ = get_dist_info()
+        if rank == 0:
+            _results = self._eval(results, num_query, logger=logger)
+            self.report_results(
+                _results, dataset_name=dataset.DATA_SOURCE, logger=logger)
 
     def report_results(self, results, dataset_name='none', logger=None):
         headers = ['dataset']

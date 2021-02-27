@@ -5,7 +5,7 @@ from functools import partial
 import numpy as np
 from mmcv.runner import get_dist_info
 from mmcv.utils import Registry, build_from_cfg
-from torch.utils.data import DataLoader, RandomSampler, DistributedSampler
+from torch.utils.data import DataLoader, DistributedSampler, RandomSampler
 from torchvision.transforms import Compose
 
 if platform.system() != 'Windows':

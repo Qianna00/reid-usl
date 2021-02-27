@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 
 
-def rank(dist, q_pids, g_pids, q_camids, g_camids, max_rank=50):
+def ranking(dist, q_pids, g_pids, q_camids, g_camids, max_rank=50):
     """Peron re-identification evaluation.
 
     Args:

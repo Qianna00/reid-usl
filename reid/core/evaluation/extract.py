@@ -101,7 +101,7 @@ def collect_results_cpu(results_part, size, tmpdir=None):
         # load results of all parts from tmp dir
         part_list = []
         for i in range(world_size):
-            part_file = osp.join(tmpdir, f'part_{rank}.pkl')
+            part_file = osp.join(tmpdir, f'part_{i}.pkl')
             part_list.append(mmcv.load(part_file))
         # sort the results
         ordered_results = _sort_results(part_list, size)
@@ -142,4 +142,22 @@ def collect_results_gpu(results_part, size):
 
 
 def _sort_results(part_list, size):
-    raise NotImplementedError
+    results = defaultdict(list)
+
+    for key in part_list[0].keys():
+        for i in range(len(part_list)):
+            results[key].append(part_list[i][key])
+
+    for key in results.keys():
+        result = torch.stack(results[key])
+        if key == 'feats':
+            assert result.dim() == 3  # (world_size, _, feat_dim)
+            feat_dim = result.shape[-1]
+            result = result.permute(1, 0, 2).reshape(-1, feat_dim)
+        else:
+            assert result.dim() == 2  # (world_size, _)
+            result = result.permute(1, 0).reshape(-1)
+
+        results[key] = result[:size]
+
+    return results

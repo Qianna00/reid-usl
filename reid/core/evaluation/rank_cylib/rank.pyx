@@ -4,12 +4,12 @@ import numpy as np
 cimport numpy as np
 
 
-cpdef rank(float[:,:] distmat, 
-           long[:] q_pids,
-           long[:] g_pids,
-           long[:] q_camids,
-           long[:] g_camids,
-           long max_rank):
+cpdef ranking(float[:,:] distmat, 
+              long[:] q_pids,
+              long[:] g_pids,
+              long[:] q_camids,
+              long[:] g_camids,
+              long max_rank):
     
     cdef long num_q = distmat.shape[0]
     cdef long num_g = distmat.shape[1]

@@ -1,4 +1,7 @@
-_base_ = ['../_base_/models/bot.py', '../_base_/default_runtime.py']
+_base_ = [
+    '../_base_/models/bot.py', '../_base_/evaluation.py',
+    '../_base_/default_runtime.py'
+]
 
 model = dict(
     type='MMCL',
@@ -54,8 +57,7 @@ data = dict(
         data_source=data_source_cfg,
         pipeline=test_pipeline,
         test_mode=True))
-evaluation = dict(
-    interval=5, metric='cosine', feat_norm=True, max_rank=50, topk=(1, 5, 10))
+evaluation = dict(metric='euclidean', feat_norm=False)
 
 # additional hooks
 custom_hooks = [dict(type='MMCLHook')]

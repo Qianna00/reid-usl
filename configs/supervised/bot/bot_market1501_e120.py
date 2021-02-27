@@ -1,5 +1,7 @@
-_base_ = ['../../_base_/models/bot.py', '../../_base_/default_runtime.py']
-
+_base_ = [
+    '../_base_/models/bot.py', '../_base_/evaluation.py',
+    '../_base_/default_runtime.py'
+]
 data_source_cfg = dict(
     type='Market1501', data_root='/data/datasets/market1501')
 dataset_type = 'ReIDDataset'
@@ -36,8 +38,6 @@ data = dict(
         data_source=data_source_cfg,
         pipeline=test_pipeline,
         test_mode=True))
-evaluation = dict(
-    interval=5, metric='cosine', feat_norm=True, max_rank=50, topk=(1, 5, 10))
 
 # optimizer
 optimizer = dict(type='Adam', lr=0.00035, weight_decay=0.0005)

@@ -1,4 +1,4 @@
-from .camstyle import CamStyle
+from .camstyle import RandomCamStyle
 from .transforms import *  # noqa
 
-__all__ = ['CamStyle']
+__all__ = ['RandomCamStyle']

@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 
+from reid.core import MPLP
 from ..builder import REIDS
 from ..utils import MemoryLayer
 from .baseline import Baseline
@@ -47,57 +48,15 @@ class MMCL(Baseline):
 
         self.base_momentum = base_momentum
         self.momentum = base_momentum  # updated by hook
-        self.t = t
         self.start_epoch = start_epoch
-
         self._epoch = None
+
+        self.label_predictor = MPLP(t=t)
 
     def set_epoch(self, epoch):
         """Set runnint epoch by hook.
         """
         self._epoch = epoch
-
-    @torch.no_grad()
-    def generate_label(self, idx):
-        """Generate multi labels by MPLP.
-
-        Args:
-            idx (Tensor): Indices of images in the dataset.
-
-        Returns:
-            Tensor: Multi-labels.
-        """
-        feats = self.memory.clone().detach()
-
-        s = feats[idx].mm(feats.t())
-        s_sorted, idx_sorted = torch.sort(s, dim=1, descending=True)
-        multi_labels = torch.zeros(s.size(), dtype=torch.long).cuda()
-        mask_num = torch.sum(s_sorted > self.t, dim=1)
-
-        for i in range(s.shape[0]):
-            topk = int(mask_num[i].item())
-            topk = max(topk, 10)
-            topk_idx = idx_sorted[i, :topk]
-
-            _s = feats[topk_idx].mm(feats.t())
-            _, _idx_sorted = torch.sort(_s, dim=1, descending=True)
-            step = 1
-            for j in range(topk):
-                # print(_idx_sorted[j], idx[i])
-                pos = torch.nonzero(_idx_sorted[j] == idx[i], as_tuple=False)
-                pos = pos.reshape(-1).item()
-                if pos > topk:
-                    break
-                step = max(step, j)
-            step += 1
-            step = min(step, mask_num[i].item())
-            if step <= 0:
-                continue
-            multi_labels[i, idx_sorted[i, :step]] = 1
-
-        multi_labels.scatter_(1, idx.unsqueeze(1), 1)
-
-        return multi_labels
 
     def forward_train(self, img, idx, **kwargs):
         """Forward computation during training.
@@ -116,7 +75,8 @@ class MMCL(Baseline):
 
         with torch.no_grad():
             if self._epoch >= self.start_epoch:
-                labels = self.generate_label(idx)
+                labels = self.label_predictor.generate_labels(
+                    self.memory.clone().detach(), idx)
             else:
                 labels = logits.new_zeros(logits.size(), dtype=torch.long)
                 labels.scatter_(1, idx.unsqueeze(1), 1)

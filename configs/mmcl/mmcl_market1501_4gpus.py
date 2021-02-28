@@ -18,9 +18,9 @@ dataset_type = 'ReIDDataset'
 img_norm_cfg = dict(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 train_pipeline = [
     dict(
-        type='CamStyle',
+        type='RandomCamStyle',
         camstyle_root='bounding_box_train_camstyle',
-        p=1 - 1. / 6),  # 1 - 1 / num_cams
+        p=0.2),
     dict(
         type='RandomResizedCropV2',
         size=(256, 128),
@@ -46,8 +46,8 @@ test_pipeline = [
     dict(type='Normalize', **img_norm_cfg)
 ]
 data = dict(
-    samples_per_gpu=128,
-    workers_per_gpu=8,
+    samples_per_gpu=32,  # 32 x 4 = 128
+    workers_per_gpu=4,
     train=dict(
         type=dataset_type,
         data_source=data_source_cfg,

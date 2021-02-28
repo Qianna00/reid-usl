@@ -77,7 +77,7 @@ class Evaluator:
 
         return _results
 
-    def eval(self, model, data_loader, logger=None):
+    def eval(self, model, data_loader, logger=None, return_results=False):
         dataset = data_loader.dataset
         assert dataset.test_mode  # test mode
         num_query = dataset.num_query
@@ -89,6 +89,8 @@ class Evaluator:
             _results = self._eval(results, num_query, logger=logger)
             self.report_results(
                 _results, dataset_name=dataset.DATA_SOURCE, logger=logger)
+            if return_results:
+                return _results
 
     def report_results(self, results, dataset_name='none', logger=None):
         headers = ['dataset']

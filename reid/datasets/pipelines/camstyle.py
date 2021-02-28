@@ -5,7 +5,9 @@ from ..builder import PIPELINES
 
 
 @PIPELINES.register_module()
-class CamStyle(object):
+class RandomCamStyle(object):
+    """Randomly apply CamStyle.
+    """
 
     def __init__(self,
                  dataset,
@@ -24,12 +26,15 @@ class CamStyle(object):
                 return rand_camid
 
     def __call__(self, img, camid):
-        if self.p > random.random():
+        if self.p < random.random():
             return img
 
         rand_camid = self._random_camid(camid)
         img = osp.basename(img)[:-4]  # remove postfix
-        img = f'{img}_fake_{camid}to{rand_camid}.jpg'
+        if self.dataset.DATA_SOURCE == 'MSMT17':
+            img = f'{img}_fake_{rand_camid}.jpg'
+        else:
+            img = f'{img}_fake_{camid}to{rand_camid}.jpg'
         img = osp.join(self.camstyle_root, img)
 
         return img

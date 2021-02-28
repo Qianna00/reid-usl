@@ -48,7 +48,7 @@ class ReIDDataset(Dataset):
     def build_pipeline(self, pipeline):
         self.with_camstyle = False
         # CamStyle must be the first transform if used
-        if pipeline[0]['type'] == 'CamStyle':
+        if pipeline[0]['type'] == 'RandomCamStyle':
             camstyle_cfg = pipeline.pop(0)
             camstyle_cfg['dataset'] = self
             self.with_camstyle = True

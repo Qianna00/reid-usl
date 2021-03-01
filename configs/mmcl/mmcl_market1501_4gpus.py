@@ -20,7 +20,7 @@ train_pipeline = [
     dict(
         type='RandomCamStyle',
         camstyle_root='bounding_box_train_camstyle',
-        p=0.14),
+        p=0.11),
     dict(
         type='RandomResizedCropV2',
         size=(256, 128),
